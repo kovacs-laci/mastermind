@@ -12,9 +12,13 @@ function createBoard(rows = 3) {
         const row = document.createElement("div");
         row.classList.add("row");
         for (let j = 0; j < 5; j++) { // 5 slots per row
+            const container = document.createElement("div");
+            container.classList.add("slot-container"); // Create square container
+
             const slot = document.createElement("select");
             slot.classList.add("select-color");
             slot.disabled = i !== activeRow; // Disable slots in inactive rows
+
             colors.forEach(color => {
                 const option = document.createElement("option");
                 option.value = color;
@@ -22,13 +26,17 @@ function createBoard(rows = 3) {
                 option.style.backgroundColor = color === "none" ? "#ccc" : color; // Default gray for "none"
                 slot.appendChild(option);
             });
+
             slot.addEventListener("change", () => updateSlotColor(slot));
-            row.appendChild(slot);
+
+            container.appendChild(slot); // Add slot to container
+            row.appendChild(container);  // Add container to row
         }
-        board.appendChild(row);
+        board.appendChild(row); // Add row to board
     }
     generateSolution();
 }
+
 
 // Update the slot color based on the selected value
 function updateSlotColor(slot) {
@@ -90,5 +98,5 @@ checkButton.addEventListener("click", () => {
 });
 
 // Initialize the game
-createBoard(3); // Start with 3 rows
+createBoard(10); // Start with 3 rows
 
