@@ -1,102 +1,92 @@
+// Get the board and button elements
 const board = document.getElementById("board");
 const checkButton = document.getElementById("check-button");
 
-let activeRow = 0; // Track the current row
-let solution = []; // Store the correct solution
-const colors = ["none", "red", "blue", "green", "yellow", "purple"]; // Add "none" as the default
+// Game variables
+let activeRow = 0; // Keep track of which row the player is guessing
+let solution = []; // Store the correct color combination
+const colors = ["none", "red", "blue", "green", "yellow", "purple"]; // Available colors
 
-// Generate the board with dropdowns
+// Create the game board
 function createBoard(rows = 3) {
+    // Clear the board before creating rows
     board.innerHTML = "";
+
     for (let i = 0; i < rows; i++) {
         const row = document.createElement("div");
-        row.classList.add("row");
-        for (let j = 0; j < 5; j++) { // 5 slots per row
-            const container = document.createElement("div");
-            container.classList.add("slot-container"); // Create square container
+        row.className = "row"; // Set class name for styling
 
-            const slot = document.createElement("select");
-            slot.classList.add("select-color");
-            slot.disabled = i !== activeRow; // Disable slots in inactive rows
+        for (let j = 0; j < 5; j++) { // Each row has 5 slots
+            const slot = document.createElement("select"); // Dropdown for each slot
+            slot.className = "select-color"; // Set class name for styling
+            slot.disabled = i !== activeRow; // Disable slots that are not in the active row
 
+            // Add color options to the dropdown
             colors.forEach(color => {
                 const option = document.createElement("option");
-                option.value = color;
-                option.textContent = color === "none" ? "" : color; // Display blank for "none"
-                option.style.backgroundColor = color === "none" ? "#ccc" : color; // Default gray for "none"
+                option.value = color; // Value for checking
+                option.textContent = color === "none" ? "" : color; // No text for "none"
                 slot.appendChild(option);
             });
 
-            slot.addEventListener("change", () => updateSlotColor(slot));
-
-            container.appendChild(slot); // Add slot to container
-            row.appendChild(container);  // Add container to row
+            row.appendChild(slot); // Add slot to row
         }
-        board.appendChild(row); // Add row to board
+
+        board.appendChild(row); // Add row to the board
     }
-    generateSolution();
+
+    generateSolution(); // Generate the correct color combination
 }
 
-
-// Update the slot color based on the selected value
-function updateSlotColor(slot) {
-    const selectedColor = slot.value;
-    if (selectedColor === "none") {
-        slot.style.backgroundColor = "#ccc"; // Default gray if no color is selected
-    } else {
-        slot.style.backgroundColor = selectedColor; // Change background color to selected value
-    }
-    slot.style.color = "transparent"; // Hide the text
-}
-
-// Generate a random solution
+// Generate a random color combination for the solution
 function generateSolution() {
-    solution = [];
+    solution = []; // Clear the solution array
+
     for (let i = 0; i < 5; i++) {
-        const randomColor = colors.slice(1)[Math.floor(Math.random() * (colors.length - 1))];
-        solution.push(randomColor);
+        const randomColor = colors[Math.floor(Math.random() * (colors.length - 1)) + 1]; // Skip "none"
+        solution.push(randomColor); // Add random color to the solution
     }
-    console.log("Solution:", solution); // Debugging
+
+    console.log("Solution:", solution); // Print solution for debugging
 }
 
 // Check the player's guess
 checkButton.addEventListener("click", () => {
-    const currentRow = board.children[activeRow];
-    const guess = Array.from(currentRow.children).map(container => container.firstChild.value); // Get slot colors
+    const currentRow = board.children[activeRow]; // Get the active row
+    const guess = Array.from(currentRow.children).map(slot => slot.value); // Get the guessed colors
 
     if (guess.includes("none")) {
-        alert("Complete all slots before checking!");
+        alert("Please select a color for all slots before checking!");
         return;
     }
 
-    // Check the guess against the solution
+    // Check each slot against the solution
     guess.forEach((color, index) => {
-        const container = currentRow.children[index]; // The .slot-container
+        const slot = currentRow.children[index];
+
         if (color === solution[index]) {
-            container.style.borderColor = "green"; // Correct color and position
+            slot.style.border = "3px solid green"; // Correct color and position
         } else if (solution.includes(color)) {
-            container.style.borderColor = "yellow"; // Correct color, wrong position
+            slot.style.border = "3px solid yellow"; // Correct color, wrong position
         } else {
-            container.style.borderColor = "red"; // Wrong color
+            slot.style.border = "3px solid red"; // Incorrect color
         }
     });
 
-    // Move to the next row if not solved
+    // Check if the guess is correct
     if (guess.join() === solution.join()) {
-        alert("You win!");
+        alert("Congratulations, you guessed the correct combination!");
     } else {
         activeRow++;
+
         if (activeRow >= board.children.length) {
-            alert("Game Over! Solution: " + solution.join(", "));
+            alert("Game over! The correct combination was: " + solution.join(", "));
         } else {
-            // Enable next row
-            Array.from(board.children[activeRow].children).forEach(container => {
-                container.firstChild.disabled = false;
-            });
+            // Enable the next row for guessing
+            Array.from(board.children[activeRow].children).forEach(slot => slot.disabled = false);
         }
     }
 });
 
-// Initialize the game
-createBoard(10); // Start with 3 rows
-
+// Start the game with 3 rows
+createBoard(10);
