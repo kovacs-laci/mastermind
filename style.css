@@ -1,0 +1,102 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+.circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 5px;
+}
+
+.red { background-color: red; }
+.blue { background-color: blue; }
+.green {background-color: green; }
+.yellow { background-color: yellow; }
+.brown { background-color: brown; }
+.orange { background-color: orange; }
+.pink { background-color: pink; }
+.violet { background-color: violet; }
+.purple { background-color: purple; }
+.lime { background-color: lime; }
+.black { background-color: black; }
+.white { background-color: white; }
+/* További színek itt */
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f0f0;
+}
+
+#board {
+    display: grid;
+    grid-template-rows: repeat(3, 50px); /* Initially 3 rows */
+    gap: 10px;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+/*.slot {*/
+/*    width: 50px;*/
+/*    height: 50px;*/
+/*    border-radius: 50%;*/
+/*    background-color: #ccc;*/
+/*    border: 2px solid #000;*/
+/*    cursor: pointer;*/
+/*}*/
+
+#check-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.select-color {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #ccc;
+    border: 2px solid #000;
+    appearance: none; /* Remove default styles */
+    cursor: pointer;
+    margin: auto;
+    text-align: center;
+}
+
+.select-color option {
+    background-color: #fff;
+}
+
+.slot-container {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px solid transparent; /* Default border */
+    margin: 5px;
+}
+
+.slot {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #ccc; /* Default circle color */
+}
+
+
