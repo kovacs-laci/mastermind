@@ -1,12 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     const board = document.getElementById("board");
-    const checkButton = document.getElementById("check-button");
     const colorPoll = document.getElementById("color-poll");
+    const checkButton = document.getElementById("check-button");
     const resetButton = document.getElementById("reset-button");
 
     let activeRow = 0; // Track the current active row
     let solution = []; // Store the correct solution
-    const colors = ["red", "blue", "green", "yellow", "purple"]; // Available colors
+    const colors = ["red", "blue", "green", "brown", "purple"]; // Available colors
     let currentGuess = [null, null, null, null, null]; // Track the player's current guess
     let selectedSlotIndex = null; // Track the currently selected slot in the active row
 
@@ -153,9 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        if (currentGuess.join() === solution.join()) {
-            alert("You win!");
-        } else {
+        if (currentGuess.join() !== solution.join()) {
             activeRow++;
             if (activeRow >= board.children.length) {
                 alert("Game Over! The solution was: " + solution.join(", "));
@@ -166,10 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
-
-
-
-
 
     // Update the board to activate the next row and disable previous rows
     function updateBoard() {
