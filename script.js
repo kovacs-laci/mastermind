@@ -231,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-// Improved `checkGuess` Function:
     function checkGuess(guess, solution) {
         const feedback = new Array(guess.length).fill("wrong color"); // Default to "wrong color"
         const colorCount = {}; // Track occurrences of each color in the solution
@@ -383,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // console.log("Solution:", solution);
         return solution;
     }
+    
     function setupGame(settings) {
         const predefinedColors = [
             "red", "blue", "green", "brown", "purple", "yellow", "orange",
