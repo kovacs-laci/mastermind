@@ -13,10 +13,43 @@ document.addEventListener("DOMContentLoaded", () => {
     let solution = []; // Store the correct solution
     let currentGuess = [null, null, null, null, null]; // Track the player's current guess
     let selectedSlotIndex = null; // Track the currently selected slot in the active row
+    let stopwatchInterval;
+    let elapsedTime = 0;
 
     // Declare setup and settings globally
     let settings;
     let setup;
+
+    function toggleStopwatchMode(isStopwatchMode) {
+        const stopwatch = document.getElementById('stopwatch');
+        if (isStopwatchMode) {
+            stopwatch.style.display = 'inline'; // Show the stopwatch
+            resetStopwatch(); // Ensure it starts from zero
+        } else {
+            stopwatch.style.display = 'none'; // Hide the stopwatch
+            clearInterval(stopwatchInterval); // Stop updating
+        }
+    }
+
+    function startStopwatch() {
+        const stopwatch = document.getElementById('stopwatch');
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = setInterval(() => {
+            elapsedTime += 1;
+            const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+            stopwatch.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    function stopStopwatch() {
+        clearInterval(stopwatchInterval); // Stop the timer
+    }
+
+    function resetStopwatch() {
+        elapsedTime = 0;
+        document.getElementById('stopwatch').textContent = '00:00'; // Reset display
+    }
 
     function displayColorPoll(pollColors) {
         colorPoll.innerHTML = ""; 
@@ -56,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Create the game board
     function displayBoard(rows = maxRows) {
-
         const board = document.getElementById("board"); // Get the board element
         // Update the grid-template-rows property
         board.style.gridTemplateRows = `repeat(${rows}, 50px)`;
@@ -186,7 +218,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentGuess.join() !== solution.join()) {
             activeRow++;
             if (activeRow >= board.children.length) {
-                alert("Játék vége! A megoldás: " + solution.join(", "));
+                if (settings.mode == "stopwatch") {
+                    stopStopwatch();                    
+                }                
+                // alert("Játék vége! A megoldás: " + solution.join(", "));    
+                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));            
             } else {
                 currentGuess = [null, null, null, null, null]; // Reset guess
                 selectedSlotIndex = null; // Reset selected slot
@@ -253,6 +289,23 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedSlotIndex = null;
         displayColorPoll(setup.pollColors);
         displayBoard(settings.rows);
+        if (settings.mode == "stopwatch") {            
+            const stopwatch = document.getElementById("stopwatch");
+            if (stopwatch.classList.contains("hidden")) {
+                stopwatch.classList.remove("hidden");
+                stopwatch.classList.add("show");
+            }
+            resetStopwatch();            
+            startStopwatch();
+        }
+        else {            
+            const stopwatch = document.getElementById("stopwatch");
+            if (stopwatch.classList.contains("show")) {
+                stopwatch.classList.remove("show");
+                stopwatch.classList.add("hidden");
+            } 
+            stopStopwatch();   
+        }
     }
 
     settingsButton.addEventListener("click", () => {
@@ -271,20 +324,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const rows = document.getElementById("rows").value;
         const colorPollLength = document.getElementById("color-poll-length").value;
         const allowDuplicates = document.getElementById("allow-duplicates").checked;
-        const mode = document.querySelector('input[name="mode"]:checked');
+        const mode = document.querySelector('input[name="mode"]:checked').value;
         const helper = document.getElementById("helper").checked;
 
-        // Mentés Local Storage-be
-        localStorage.setItem("settings", JSON.stringify({
+        // Create the updated settings object
+        settings = {
             rows: rows,
             colorPollLength: colorPollLength,
             allowDuplicates: allowDuplicates,
             mode: mode,
             helper: helper,
-        }));
+        };
+
+        // Save the updated settings to localStorage
+        localStorage.setItem("settings", JSON.stringify(settings));
+
         const settingsPanel = document.getElementById("settings");
         settingsPanel.classList.remove("show");
-        settingsPanel.classList.add("hidden");
+        settingsPanel.classList.add("hidden");        
     });
 
     function loadSettings() {
@@ -346,6 +403,28 @@ document.addEventListener("DOMContentLoaded", () => {
             solution,
             pollColors: sortedPollColors // Sorted poll colors
         };
+    }
+
+    function translateSolution(solution) {
+        const colorTranslations = {
+            red: "piros",
+            blue: "kék",
+            green: "zöld",
+            brown: "barna",
+            purple: "lila",
+            yellow: "sárga",
+            orange: "narancs",
+            pink: "rózsaszín",
+            gray: "szürke",
+            black: "fekete",
+            tomato: "paradicsom",
+            cyan: "cián",
+            magenta: "magenta",
+            lime: "lime",
+            teal: "türkiz"
+        };
+
+        return solution.map(color => colorTranslations[color] || color); // Use translation or fallback to English
     }
 
     newGameButton.click();
