@@ -10,37 +10,49 @@ h1 {
     color: #333;
 }
 
-.circle {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: inline-block;
-    margin: 5px;
+input[type="number"] {
+    width: 40px;
+}
+#color-poll {
+    display: flex;
+    flex-direction: column; /* Ensures rows stack vertically */
+    align-items: center; /* Centers the rows horizontally */
 }
 
-.red { background-color: red; }
-.blue { background-color: blue; }
-.green {background-color: green; }
-.yellow { background-color: yellow; }
-.brown { background-color: brown; }
-.orange { background-color: orange; }
-.pink { background-color: pink; }
-.violet { background-color: violet; }
-.purple { background-color: purple; }
-.lime { background-color: lime; }
-.black { background-color: black; }
-.white { background-color: white; }
-/* További színek itt */
+.color-row {
+    display: flex; /* Displays colors in a row */
+    justify-content: center; /* Centers the color slots horizontally */
+    gap: 10px; /* Adds spacing between slots */
+    margin-bottom: 10px; /* Adds spacing between rows */
+    flex-wrap: nowrap; /* Prevents wrapping onto the next line */
+}
 
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f0f0f0;
+.color-slot {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #000;
+}
+
+#pool {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 50px);
+    gap: 10px;
+    margin: 20px auto;
+    justify-content: center;
+}
+.slot {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
 }
 
 #board {
     display: grid;
-    grid-template-rows: repeat(3, 50px); /* Initially 3 rows */
+    grid-template-rows: repeat(5, 50px); /* Adjust rows dynamically */
     gap: 10px;
     justify-content: center;
     margin: 20px auto;
@@ -51,37 +63,6 @@ body {
     gap: 10px;
 }
 
-/*.slot {*/
-/*    width: 50px;*/
-/*    height: 50px;*/
-/*    border-radius: 50%;*/
-/*    background-color: #ccc;*/
-/*    border: 2px solid #000;*/
-/*    cursor: pointer;*/
-/*}*/
-
-#check-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    margin-top: 20px;
-}
-
-.select-color {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #ccc;
-    border: 2px solid #000;
-    appearance: none; /* Remove default styles */
-    cursor: pointer;
-    margin: auto;
-    text-align: center;
-}
-
-.select-color option {
-    background-color: #fff;
-}
-
 .slot-container {
     width: 50px;
     height: 50px;
@@ -89,33 +70,76 @@ body {
     justify-content: center;
     align-items: center;
     border: 3px solid transparent; /* Default border */
-    /*margin: 5px;*/
+    background-color: #ccc;
+    cursor: pointer;
 }
 
-.slot {
+.slot-container {
+    position: relative; /* For positioning content inside the slot */
     width: 50px;
     height: 50px;
-    border-radius: 50%; /* Circle shape */
-    background-color: #ccc; /* Default circle color */
+    background-color: #ccc; /* Default slot color */
+    cursor: pointer;
+    display: flex; /* Flexbox for centering content */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    transition: all 0.2s ease; /* Smooth transition for visual changes */
+    border: 3px solid transparent; /* Default border */
+}
+
+.slot-container span {
+    pointer-events: none; /* Prevent the mark (â, X, or âŞ) from being interactive */
+}
+
+.slot-container .wrong-position-dot {
+    position: absolute; /* For precise placement */
+    bottom: 5px; /* Bottom-right corner of the slot */
+    right: 5px;
+    font-size: 12px; /* Smaller size */
+    color: yellow; /* Yellow for wrong position */
+}
+
+
+.slot-container.correct span {
+    color: white; /* Ensure checkmark is white */
+    font-size: 24px; /* Larger size for visibility */
+    font-weight: bold;
+}
+
+.slot-container.incorrect span {
+    color: white; /* Ensure X mark is white */
+    font-size: 24px; /* Larger size for visibility */
+    font-weight: bold;
+}
+
+
+#check-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin-top: 20px;
+    background-color: green;
+    color: white;
+}
+
+.slot-container.filled {
+    background-color: transparent;
+    border-color: #000; /* Indicates filled slots */
 }
 
 .hidden {
     display: none;
 }
 
-#color-popup {
-    position: absolute;
-    background-color: white;
-    border: 2px solid #ccc;
-    padding: 10px;
+.show {
     display: flex;
-    gap: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 15px auto;
 }
 
-.color-option {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
+.form-group {
+    display: flex;             /* Use Flexbox for alignment */
+    align-items: center;       /* Vertically center label and input */
+    gap: 10px;                 /* Add space between label and input */
 }
