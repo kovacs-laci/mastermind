@@ -10,16 +10,22 @@ h1 {
     color: #333;
 }
 
+input[type="number"] {
+    width: 40px;
+}
+
 #color-poll {
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px auto;
+    flex-direction: column; /* Ensures rows stack vertically */
+    align-items: center; /* Centers the rows horizontally */
 }
 
 .color-row {
-    display: flex;
-    gap: 10px;
+    display: flex; /* Displays colors in a row */
+    justify-content: center; /* Centers the color slots horizontally */
+    gap: 10px; /* Adds spacing between slots */
+    margin-bottom: 10px; /* Adds spacing between rows */
+    flex-wrap: nowrap; /* Prevents wrapping onto the next line */
 }
 
 .color-slot {
@@ -30,9 +36,24 @@ h1 {
     border: 2px solid #000;
 }
 
+#pool {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 50px);
+    gap: 10px;
+    margin: 20px auto;
+    justify-content: center;
+}
+.slot {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
 #board {
     display: grid;
-    grid-template-rows: repeat(10, 50px); /* Adjust rows dynamically */
+    grid-template-rows: repeat(5, 50px); /* Adjust rows dynamically */
     gap: 10px;
     justify-content: center;
     margin: 20px auto;
@@ -68,7 +89,7 @@ h1 {
 }
 
 .slot-container span {
-    pointer-events: none; /* Prevent the mark (✓, X, or ⚪) from being interactive */
+    pointer-events: none; /* Prevent the mark (â, X, or âŞ) from being interactive */
 }
 
 .slot-container .wrong-position-dot {
@@ -93,7 +114,7 @@ h1 {
 }
 
 
-#check-button {
+#check-button, #new-game-button {
     padding: 10px 20px;
     font-size: 16px;
     margin-top: 20px;
@@ -101,7 +122,30 @@ h1 {
     color: white;
 }
 
+#new-game-button {
+    background-color: yellow;
+    color: black;
+}
+
 .slot-container.filled {
     background-color: transparent;
     border-color: #000; /* Indicates filled slots */
+}
+
+.hidden {
+    display: none;
+}
+
+.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 15px auto;
+}
+
+.form-group {
+    display: flex;             /* Use Flexbox for alignment */
+    align-items: center;       /* Vertically center label and input */
+    gap: 10px;                 /* Add space between label and input */
 }
