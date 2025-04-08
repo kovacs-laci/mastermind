@@ -2,41 +2,103 @@ document.addEventListener("DOMContentLoaded", () => {
     const board = document.getElementById("board");
     const colorPoll = document.getElementById("color-poll");
     const checkButton = document.getElementById("check-button");
-    const resetButton = document.getElementById("reset-button");
+    const newGameButton = document.getElementById("new-game-button");
+    const settingsButton  = document.getElementById("settings-button");
+    const saveSettingsButton = document.getElementById("save-settings-button");
+
+    const maxRows = 10;
+    const maxColors = 10;
+    const cols = 5;
 
     let activeRow = 0; // Track the current active row
     let solution = []; // Store the correct solution
-    const colors = ["red", "blue", "green", "brown", "purple"]; // Available colors
     let currentGuess = [null, null, null, null, null]; // Track the player's current guess
     let selectedSlotIndex = null; // Track the currently selected slot in the active row
+    let stopwatchInterval;
+    let elapsedTime = 0;
 
-    // Create the color-poll
-    function createColorPoll(difficulty = 5) {
-        colorPoll.innerHTML = ""; // Clear the poll
-        const pollRow = document.createElement("div");
-        pollRow.classList.add("color-row");
+    // Declare setup and settings globally
+    let settings;
+    let setup;
 
-        colors.slice(0, difficulty).forEach(color => {
+    // function toggleStopwatchMode(isStopwatchMode) {
+    //     const stopwatch = document.getElementById('stopwatch');
+    //     if (isStopwatchMode) {
+    //         stopwatch.style.display = 'inline'; // Show the stopwatch
+    //         resetStopwatch(); // Ensure it starts from zero
+    //     } else {
+    //         stopwatch.style.display = 'none'; // Hide the stopwatch
+    //         clearInterval(stopwatchInterval); // Stop updating
+    //     }
+    // }
+
+    function startStopwatch() {
+        const stopwatch = document.getElementById('stopwatch');
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = setInterval(() => {
+            elapsedTime += 1;
+            const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+            stopwatch.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    function stopStopwatch() {
+        clearInterval(stopwatchInterval); // Stop the timer
+    }
+
+    function resetStopwatch() {
+        elapsedTime = 0;
+        document.getElementById('stopwatch').textContent = '00:00'; // Reset display
+    }
+
+    function displayColorPoll(pollColors) {
+        colorPoll.innerHTML = ""; 
+
+        // Create the first row
+        const firstRow = document.createElement("div");
+        firstRow.classList.add("color-row");
+
+        // Create the second row
+        const secondRow = document.createElement("div");
+        secondRow.classList.add("color-row");
+
+        // Add colors to the rows
+        pollColors.forEach((color, index) => {
             const colorSlot = document.createElement("div");
             colorSlot.classList.add("color-slot");
             colorSlot.style.backgroundColor = color;
 
             // Assign the clicked color to the selected slot
             colorSlot.addEventListener("click", () => assignColor(color));
-            pollRow.appendChild(colorSlot);
+
+            // Append to the appropriate row
+            if (index < cols) {
+                firstRow.appendChild(colorSlot);
+            } else {
+                secondRow.appendChild(colorSlot);
+            }
         });
 
-        colorPoll.appendChild(pollRow);
+        // Append rows to the color poll
+        colorPoll.appendChild(firstRow);
+        if (pollColors.length > 5) {
+            colorPoll.appendChild(secondRow);
+        }
     }
 
     // Create the game board
-    function createBoard(rows = 10) {
+    function displayBoard(rows = maxRows) {
+        const board = document.getElementById("board"); // Get the board element
+        // Update the grid-template-rows property
+        board.style.gridTemplateRows = `repeat(${rows}, 50px)`;
         board.innerHTML = ""; // Clear the board
+
         for (let i = 0; i < rows; i++) {
             const row = document.createElement("div");
             row.classList.add("row");
 
-            for (let j = 0; j < 5; j++) {
+            for (let j = 0; j < cols; j++) {
                 const slot = document.createElement("div");
                 slot.classList.add("slot-container");
                 slot.dataset.index = j; // Save the slot index
@@ -54,14 +116,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
             board.appendChild(row);
         }
+    }
 
-        generateSolution(); // Generate a random solution
+    function getSettings() {
+        const defaultSettings = {
+            rows: maxRows,
+            colorPollLength: maxColors,
+            allowDuplicates: true,
+            mode: "relax",
+            helper: false,
+        };
+
+        const savedSettings = JSON.parse(localStorage.getItem("settings"));
+        if (savedSettings) {
+            return {
+                rows: parseInt(savedSettings.rows, maxRows) || defaultSettings.rows,
+                colorPollLength: parseInt(savedSettings.colorPollLength, maxColors) || defaultSettings.colorPollLength,
+                allowDuplicates: typeof savedSettings.allowDuplicates === "boolean"
+                    ? savedSettings.allowDuplicates
+                    : defaultSettings.allowDuplicates,
+                mode: savedSettings.mode,
+                helper: savedSettings.helper    
+            };
+        }
+
+        return defaultSettings; // Return default settings if no saved settings exist
     }
 
     // Select a slot in the active row
     function selectSlot(index) {
         if (activeRow === null) {
-            alert("No active row!");
+            alert("Nincs kiválasztott sor!");
             return;
         }
 
@@ -79,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Assign a color to the selected slot
     function assignColor(color) {
         if (selectedSlotIndex === null) {
-            alert("Please select a slot first!");
+            alert("Kérlek előbb válassz egy mezőt!");
             return;
         }
 
@@ -91,72 +176,62 @@ document.addEventListener("DOMContentLoaded", () => {
         slot.style.backgroundColor = color; // Apply the selected color to the slot
     }
 
-    // Generate a random solution
-    function generateSolution() {
-        solution = [];
-        for (let i = 0; i < 5; i++) {
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            solution.push(randomColor);
-        }
-        console.log("Solution:", solution); // Debugging
-    }
-
     // Check the player's guess
     checkButton.addEventListener("click", () => {
         if (currentGuess.includes(null)) {
-            alert("Complete your guess before checking!");
+            alert("Fejezd be a tippelést az ellenőrzés előtt!");
             return;
         }
 
         const currentRow = board.children[activeRow];
+        const feedback = checkGuess([...currentGuess], [...setup.solution]); // Call checkGuess with the current guess and solution
+
         currentGuess.forEach((color, index) => {
             const slot = currentRow.children[index];
-            const isCorrectColorAndPosition = color === solution[index];
-            const isCorrectColorWrongPosition = solution.includes(color) && !isCorrectColorAndPosition;
 
-            // Handle correct guesses
-            if (isCorrectColorAndPosition) {
-                const checkmark = document.createElement("span");
-                checkmark.textContent = "✓"; // Add the checkmark
-                checkmark.style.color = "white"; // White checkmark
-                checkmark.style.fontSize = "24px"; // Size for visibility
-                checkmark.style.fontWeight = "bold"; // Bold font
-                checkmark.style.position = "absolute"; // Place it in the middle
-                checkmark.style.top = "50%";
-                checkmark.style.left = "50%";
-                checkmark.style.transform = "translate(-50%, -50%)"; // Center the checkmark
-                slot.appendChild(checkmark); // Add the checkmark to the slot
+            const marker = document.createElement("span");
+            marker.style.color = "white";
+            marker.style.fontSize = "18px";
+            marker.style.fontWeight = "bold";
+            marker.style.position = "absolute";
+            marker.style.top = "50%";
+            marker.style.left = "50%";
+            marker.style.transform = "translate(-50%, -50%)";
+            // Apply feedback to the current guess
+            switch (feedback[index]) {
+                case "correct":
+                    // Correct position marker
+                    marker.textContent = "✓";
+                    break;
+                case "wrong position":
+                    // Wrong position marker
+                    marker.textContent = "⚪";
+                    break;
+                default:
+                    // Incorrect marker
+                    marker.textContent = "X";
+                    break;
             }
-            // Handle wrong position
-            else if (isCorrectColorWrongPosition) {
-                const dot = document.createElement("span");
-                dot.textContent = "⚪"; // Add a yellow dot
-                dot.style.color = "yellow"; // Yellow color for the dot
-                dot.style.fontSize = "12px"; // Smaller size for subtlety
-                dot.style.position = "absolute"; // Place it in the corner
-                dot.style.bottom = "5px";
-                dot.style.right = "5px";
-                slot.appendChild(dot); // Add the dot to the slot
-            }
-            // Handle incorrect guesses
-            else {
-                const cross = document.createElement("span");
-                cross.textContent = "X"; // Add the X mark
-                cross.style.color = "white"; // White X
-                cross.style.fontSize = "24px"; // Size for visibility
-                cross.style.fontWeight = "bold"; // Bold font
-                cross.style.position = "absolute"; // Place it in the middle
-                cross.style.top = "50%";
-                cross.style.left = "50%";
-                cross.style.transform = "translate(-50%, -50%)"; // Center the X
-                slot.appendChild(cross); // Add the X to the slot
-            }
+            slot.appendChild(marker);
         });
 
-        if (currentGuess.join() !== solution.join()) {
+        if (currentGuess.join() === solution.join()) {
+            if (settings.mode === "stopwatch") {
+
+                stopStopwatch();
+                if (saveBestTime(elapsedTime)) {
+                    alert("Legjobb idő!");
+                }
+            }
+            // alert("Gratulálok, nyertél!");
+        }
+        else {
             activeRow++;
             if (activeRow >= board.children.length) {
-                alert("Game Over! The solution was: " + solution.join(", "));
+                if (settings.mode == "stopwatch") {
+                    stopStopwatch();                    
+                }                
+                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
             } else {
                 currentGuess = [null, null, null, null, null]; // Reset guess
                 selectedSlotIndex = null; // Reset selected slot
@@ -164,6 +239,35 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+
+    function checkGuess(guess, solution) {
+        const feedback = new Array(guess.length).fill("wrong color"); // Default to "wrong color"
+        const colorCount = {}; // Track occurrences of each color in the solution
+
+        // Count occurrences of each color in the solution
+        solution.forEach(color => {
+            colorCount[color] = (colorCount[color] || 0) + 1;
+        });
+
+        // Step 1: Check for exact matches (correct color and position)
+        guess.forEach((color, index) => {
+            if (color === solution[index]) {
+                feedback[index] = "correct"; // Correct position
+                colorCount[color]--; // Decrease availability
+                guess[index] = null; // Mark as processed
+            }
+        });
+
+        // Step 2: Check for correct color but wrong position
+        guess.forEach((color, index) => {
+            if (color && feedback[index] !== "correct" && colorCount[color] > 0) {
+                feedback[index] = "wrong position"; // Wrong position
+                colorCount[color]--; // Decrease availability
+            }
+        });
+
+        return feedback;
+    }
 
     // Update the board to activate the next row and disable previous rows
     function updateBoard() {
@@ -180,17 +284,198 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Reset the game
-    resetButton.addEventListener("click", () => {
-        activeRow = 0; // Reset the active row
-        currentGuess = [null, null, null, null, null]; // Clear the current guess
-        selectedSlotIndex = null; // Clear the selected slot
-        generateSolution(); // Generate a new solution
-        createBoard(10); // Recreate the board
-        updateBoard(); // Set the first row as active
+    newGameButton.addEventListener("click", () => {
+        settings = getSettings();
+        setup = setupGame(getSettings());
+        newGame(settings, setup);
     });
 
-    // Initialize the game
-    createColorPoll(colors.length); // Create the color-poll
-    createBoard(10); // Create the board with 10 rows
+    function newGame(settings, setup)
+    {
+        activeRow = 0;
+        currentGuess = [null, null, null, null, null];
+        selectedSlotIndex = null;
+        displayColorPoll(setup.pollColors);
+        displayBoard(settings.rows);
+        if (settings.mode === "stopwatch") {
+            const stopwatchContainer = document.getElementById("stopwatch-container");
+            if (stopwatchContainer.classList.contains("hidden")) {
+                stopwatchContainer.classList.remove("hidden");
+                stopwatchContainer.classList.add("show");
+            }
+            displayBestTime();
+            resetStopwatch();            
+            startStopwatch();
+        }
+        else {            
+            const stopwatchContainer = document.getElementById("stopwatch-container");
+            if (stopwatchContainer.classList.contains("show")) {
+                stopwatchContainer.classList.remove("show");
+                stopwatchContainer.classList.add("hidden");
+            } 
+            stopStopwatch();   
+        }
+    }
+
+    settingsButton.addEventListener("click", () => {
+        const settingsPanel = document.getElementById("settings");
+        if (settingsPanel.classList.contains("hidden")) {
+            loadSettings();
+            settingsPanel.classList.remove("hidden");
+            settingsPanel.classList.add("show");
+        } else {
+            settingsPanel.classList.remove("show");
+            settingsPanel.classList.add("hidden");
+        }
+    });
+
+    saveSettingsButton.addEventListener("click", () => {
+        const rows = document.getElementById("rows").value;
+        const colorPollLength = document.getElementById("color-poll-length").value;
+        const allowDuplicates = document.getElementById("allow-duplicates").checked;
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const helper = document.getElementById("helper").checked;
+        // Validation: Ensure valid settings
+        if (!allowDuplicates && colorPollLength < 5) {
+            alert("Hibás beállítás: legalább 5 színt kell megengedni, ha az ismétlődést kikapcsoljuk.");
+            return; // Stop the function from proceeding
+        }
+        // Create the updated settings object
+        settings = {
+            rows: rows,
+            colorPollLength: colorPollLength,
+            allowDuplicates: allowDuplicates,
+            mode: mode,
+            helper: helper,
+        };
+
+        // Save the updated settings to localStorage
+        localStorage.setItem("settings", JSON.stringify(settings));
+
+        const settingsPanel = document.getElementById("settings");
+        settingsPanel.classList.remove("show");
+        settingsPanel.classList.add("hidden");        
+    });
+
+    function loadSettings() {
+        const savedSettings = JSON.parse(localStorage.getItem("settings"));
+
+        if (savedSettings) {
+            document.getElementById("rows").value = savedSettings.rows;
+            document.getElementById("color-poll-length").value = savedSettings.colorPollLength;
+            document.getElementById("allow-duplicates").checked = savedSettings.allowDuplicates;            
+            document.getElementById("helper").checked = savedSettings.helper;
+
+            // Set the saved radio group value
+            if (savedSettings.mode && document.querySelector(`input[name="mode"][value="${savedSettings.mode}"]`)) {
+                document.querySelector(`input[name="mode"][value="${savedSettings.mode}"]`).checked = true;
+            }
+
+        } else {
+            console.log("Nincsenek mentett beállí­tások!");
+        }
+    }
+
+    function generateSolution(settings, availableColors) {
+
+        const { colorPollLength, allowDuplicates } = settings;
+
+        // Step 1: Limit the color poll based on settings.colorPollLength
+        const pollColors = availableColors.slice(0, Math.min(colorPollLength, availableColors.length));
+
+        // Step 2: Initialize the solution array
+        const solution = [];
+
+        // Step 3: Generate the solution
+        while (solution.length < cols) {
+            const randomColor = pollColors[Math.floor(Math.random() * pollColors.length)];
+            if (allowDuplicates || !solution.includes(randomColor)) {
+                solution.push(randomColor);
+            }
+        }
+        // console.log("Solution:", solution);
+        return solution;
+    }
+    
+    function setupGame(settings) {
+        const predefinedColors = [
+            "red", "blue", "green", "brown", "purple", "yellow", "orange",
+            "pink", "gray", "black", "tomato", "cyan", "magenta", "lime", "teal"
+        ];
+
+        solution = generateSolution(settings, predefinedColors);
+
+        const pollColors = new Set(solution); // Ensure poll includes all solution colors
+        while (pollColors.size < settings.colorPollLength) {
+            const randomColor = predefinedColors[Math.floor(Math.random() * predefinedColors.length)];
+            pollColors.add(randomColor);
+        }
+
+        const sortedPollColors = Array.from(pollColors).sort();
+
+        return {
+            solution,
+            pollColors: sortedPollColors // Sorted poll colors
+        };
+    }
+
+    function translateSolution(solution) {
+        const colorTranslations = {
+            red: "piros",
+            blue: "kék",
+            green: "zöld",
+            brown: "barna",
+            purple: "lila",
+            yellow: "sárga",
+            orange: "narancs",
+            pink: "rózsaszín",
+            gray: "szürke",
+            black: "fekete",
+            tomato: "paradicsom",
+            cyan: "cián",
+            magenta: "magenta",
+            lime: "lime",
+            teal: "türkiz"
+        };
+
+        return solution.map(color => colorTranslations[color] || color); // Use translation or fallback to English
+    }
+
+    function saveBestTime(time) {
+        // Create a unique key based on rows, colorPollLength, and allowDuplicates
+        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
+        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+
+        // Get existing times or initialize as empty
+        const bestTime = JSON.parse(localStorage.getItem(key)); // Retrieve existing best time
+
+        // Save the new best time if it's better or if no best time exists
+        if (!bestTime || elapsedTime < bestTime) {
+            localStorage.setItem(key, JSON.stringify(elapsedTime));
+            return true; // Indicate that a new best time was set
+        }
+        return false; // No change to the best time
+    }
+
+    function getBestTime() {
+        // Create a unique key based on rows, colorPollLength, and allowDuplicates
+        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
+        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+
+        // Return existing times or an empty array
+        return JSON.parse(localStorage.getItem(key)) || [];
+    }
+
+    function displayBestTime() {
+        const bestTime = getBestTime();
+        const bestTimeDisplay = document.getElementById("best-time-display");
+
+        if (bestTime) {
+            bestTimeDisplay.textContent = `Legjobb idő: ${bestTime}s`;
+        } else {
+            bestTimeDisplay.textContent = "Legjobb idő: ";
+        }
+    }
+
+    newGameButton.click();
 });
