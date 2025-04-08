@@ -11,46 +11,52 @@
 	<h1>Mastermind</h1>
     <div id="stopwatch-container" class="hidden">
         <span id="stopwatch">00:00</span>
-        <span id="best-time-display">Best Time: None</span>
+        <span id="best-time-display">Legjobb idő:</span>
+    </div>
+    <div id="score-container" class="hidden">
+        <span id="score-display"></span>
     </div>
 	<br>
 	<div id="color-poll"></div>
 	<div id="board"></div>
-	<button id="check-button">Ellenőrzés</button>
-	<button id="new-game-button">Új játék</button>
-    <button id="settings-button">Beállítások</button>
+    <button id="new-game-button">Új játék</button>
+    <button id="check-button"><span class="checkmark">✓️</span> Ellenőrzés</button>
+    <button id="settings-button">⚙️ Beállítások</button>
     <br>
     <div class="hidden" id="settings">
-        <div class="form-group>">
-            <label for="rows">Sorok száma:</label>
-            <input type="number" id="rows" min="1" max="10" value="5" width="15px">
-        </div>
-
-        <div class="form-group>">
-            <label for="color-poll-length">Színek száma:</label>
-            <input type="number" id="color-poll-length" min="1" max="10" value="5">
-        </div>
-
-        <div class="form-group>">
-            <label for="allow-duplicates">Ismétlődő színek:</label>
-            <input type="checkbox" id="allow-duplicates">
-        </div>
-
         <fieldset>
-            <legend>Játékmód</legend>
-            <input type="radio" id="timer" name="mode" value="stopwatch">
-            <label for="stopwatch">Időmérő</label>
-            <input type="radio" id="score" name="mode" value="score">
-            <label for="score">Pontgyűjtő</label>
-            <input type="radio" id="relax" name="mode" value="relax" checked>
-            <label for="relax">Relax</label>
+            <legend>Beállítások</legend>
+            <div class="form-group>">
+                <label for="rows">Sorok száma:</label>
+                <input type="number" id="rows" min="1" max="10" value="5" width="15px">
+            </div>
+
+            <div class="form-group>">
+                <label for="color-poll-length">Színek száma:</label>
+                <input type="number" id="color-poll-length" min="1" max="10" value="5">
+            </div>
+
+            <div class="form-group>">
+                <label for="allow-duplicates">Ismétlődő színek:</label>
+                <input type="checkbox" id="allow-duplicates">
+            </div>
+
+            <fieldset>
+                <legend>Játékmód</legend>
+                <input type="radio" id="timer" name="mode" value="stopwatch">
+                <label for="timer">Időmérő</label>
+                <input type="radio" id="score" name="mode" value="score">
+                <label for="score">Pontgyűjtő</label>
+                <input type="radio" id="relax" name="mode" value="relax" checked>
+                <label for="relax">Relax</label>
+            </fieldset>
+            <div class="hidden">
+                <label for="helper">Súgó:</label>
+                <input type="checkbox" id="helper">
+            </div>
+            <br>
+            <button id="save-settings-button">Mentés</button>
         </fieldset>
-        <div class="form-group>">
-            <label for="helper">Súgó:</label>
-            <input type="checkbox" id="helper">
-        </div>
-        <br>
-        <button id="save-settings-button">Beállítások mentése</button>
     </div>
 </body>
 </html>

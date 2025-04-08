@@ -100,7 +100,6 @@ input[type="number"] {
     color: yellow; /* Yellow for wrong position */
 }
 
-
 .slot-container.correct span {
     color: white; /* Ensure checkmark is white */
     font-size: 24px; /* Larger size for visibility */
@@ -113,18 +112,12 @@ input[type="number"] {
     font-weight: bold;
 }
 
-
-#check-button, #new-game-button {
+#check-button {
     padding: 10px 20px;
     font-size: 16px;
     margin-top: 20px;
     background-color: green;
     color: white;
-}
-
-#new-game-button {
-    background-color: yellow;
-    color: black;
 }
 
 .slot-container.filled {

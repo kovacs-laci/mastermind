@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopStopwatch() {
-        clearInterval(stopwatchInterval); // Stop the timer
+        clearInterval(stopwatchInterval);
     }
 
     function resetStopwatch() {
@@ -216,19 +216,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (currentGuess.join() === solution.join()) {
+            // alert("Gratulálok, nyertél!");
             if (settings.mode === "stopwatch") {
-
                 stopStopwatch();
                 if (saveBestTime(elapsedTime)) {
+                    displayBestTime();
                     alert("Legjobb idő!");
                 }
             }
-            // alert("Gratulálok, nyertél!");
+            if (settings.mode === "score") {
+                const score = calculateScore(activeRow);
+                if (saveScore(score)) {
+                    displayScore();
+                }
+            }
         }
         else {
             activeRow++;
             if (activeRow >= board.children.length) {
-                if (settings.mode == "stopwatch") {
+                if (settings.mode === "stopwatch") {
                     stopStopwatch();                    
                 }                
                 alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
@@ -290,32 +296,50 @@ document.addEventListener("DOMContentLoaded", () => {
         newGame(settings, setup);
     });
 
-    function newGame(settings, setup)
-    {
+    function toggleContainer(containerId, show) {
+        const container = document.getElementById(containerId);
+        if (show) {
+            container.classList.remove("hidden");
+            container.classList.add("show");
+        } else {
+            container.classList.remove("show");
+            container.classList.add("hidden");
+        }
+    }
+
+    function newGame(settings, setup) {
+        // Initialize game state
         activeRow = 0;
         currentGuess = [null, null, null, null, null];
         selectedSlotIndex = null;
+
+        // Display game elements
         displayColorPoll(setup.pollColors);
         displayBoard(settings.rows);
-        if (settings.mode === "stopwatch") {
-            const stopwatchContainer = document.getElementById("stopwatch-container");
-            if (stopwatchContainer.classList.contains("hidden")) {
-                stopwatchContainer.classList.remove("hidden");
-                stopwatchContainer.classList.add("show");
-            }
-            displayBestTime();
-            resetStopwatch();            
-            startStopwatch();
+
+        // Handle modes
+        switch (settings.mode) {
+            case "stopwatch":
+                toggleContainer("stopwatch-container", true);
+                displayBestTime();
+                resetStopwatch();
+                startStopwatch();
+                break;
+
+            case "score":
+                toggleContainer("score-container", true);
+                displayScore();
+                break;
+
+            default: // Handles all other modes or "none"
+                toggleContainer("stopwatch-container", false);
+                stopStopwatch();
+                toggleContainer("score-container", false);
+                break;
         }
-        else {            
-            const stopwatchContainer = document.getElementById("stopwatch-container");
-            if (stopwatchContainer.classList.contains("show")) {
-                stopwatchContainer.classList.remove("show");
-                stopwatchContainer.classList.add("hidden");
-            } 
-            stopStopwatch();   
-        }
+
     }
+
 
     settingsButton.addEventListener("click", () => {
         const settingsPanel = document.getElementById("settings");
@@ -442,9 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function saveBestTime(time) {
-        // Create a unique key based on rows, colorPollLength, and allowDuplicates
-        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
-        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+        const key = getSettingsKey('bestTime');
 
         // Get existing times or initialize as empty
         const bestTime = JSON.parse(localStorage.getItem(key)); // Retrieve existing best time
@@ -458,9 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getBestTime() {
-        // Create a unique key based on rows, colorPollLength, and allowDuplicates
-        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
-        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+        const key = getSettingsKey('bestTime');
 
         // Return existing times or an empty array
         return JSON.parse(localStorage.getItem(key)) || [];
@@ -475,6 +495,53 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             bestTimeDisplay.textContent = "Legjobb idő: ";
         }
+    }
+
+    function calculateScore(rowsUsed) {
+        let maxScore = settings.colorPollLength;
+
+        if (rowsUsed == 1) {
+            return maxScore;
+        }
+        // Minden felhasznált sor eggyel csökkenti az elérhető pontokat
+        const score = maxScore - rowsUsed;
+        return Math.max(0, score); // Pontszám nem lehet negatív
+    }
+
+    function saveScore(currentScore) {
+        if (currentScore <= 0) {
+            return false;
+        }
+        const key = getSettingsKey('score');
+        const score = JSON.parse(localStorage.getItem(key)) || {total: 0, playedGames: 0};
+        score.total += currentScore;
+        score.playedGames += 1;
+        localStorage.setItem(key, JSON.stringify(score));
+        return true;
+    }
+
+    function getScore() {
+        const key = getSettingsKey('score');
+
+        return JSON.parse(localStorage.getItem(key)) || [];
+    }
+
+    function displayScore() {
+        const score = getScore();
+        const scoreDisplay = document.getElementById("score-display");
+
+        if (score && score.total >= 0 && score.playedGames >= 0) {
+            scoreDisplay.textContent = `Elért pontok: ${score.total} / ${score.playedGames} játékban`;
+        } else {
+            scoreDisplay.textContent = "Elért pontok: ";
+        }
+    }
+
+    function getSettingsKey(prefix)
+    {
+        // Create a unique key based on rows, colorPollLength, and allowDuplicates
+        const duplicatesSuffix = settings.allowDuplicates ? "DA" : "NoDA";
+        return `${prefix}_${settings.rows}_${settings.colorPollLength}_${duplicatesSuffix}`;
     }
 
     newGameButton.click();
