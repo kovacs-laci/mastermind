@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const maxRows = 10;
     const maxColors = 10;
+    const cols = 5;
 
     let activeRow = 0; // Track the current active row
     let solution = []; // Store the correct solution
@@ -20,16 +21,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let settings;
     let setup;
 
-    function toggleStopwatchMode(isStopwatchMode) {
-        const stopwatch = document.getElementById('stopwatch');
-        if (isStopwatchMode) {
-            stopwatch.style.display = 'inline'; // Show the stopwatch
-            resetStopwatch(); // Ensure it starts from zero
-        } else {
-            stopwatch.style.display = 'none'; // Hide the stopwatch
-            clearInterval(stopwatchInterval); // Stop updating
-        }
-    }
+    // function toggleStopwatchMode(isStopwatchMode) {
+    //     const stopwatch = document.getElementById('stopwatch');
+    //     if (isStopwatchMode) {
+    //         stopwatch.style.display = 'inline'; // Show the stopwatch
+    //         resetStopwatch(); // Ensure it starts from zero
+    //     } else {
+    //         stopwatch.style.display = 'none'; // Hide the stopwatch
+    //         clearInterval(stopwatchInterval); // Stop updating
+    //     }
+    // }
 
     function startStopwatch() {
         const stopwatch = document.getElementById('stopwatch');
@@ -58,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const firstRow = document.createElement("div");
         firstRow.classList.add("color-row");
 
-        // Create the second row (if needed)
+        // Create the second row
         const secondRow = document.createElement("div");
         secondRow.classList.add("color-row");
 
@@ -72,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
             colorSlot.addEventListener("click", () => assignColor(color));
 
             // Append to the appropriate row
-            if (index < 5) {
+            if (index < cols) {
                 firstRow.appendChild(colorSlot);
             } else {
                 secondRow.appendChild(colorSlot);
@@ -86,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
     // Create the game board
     function displayBoard(rows = maxRows) {
         const board = document.getElementById("board"); // Get the board element
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const row = document.createElement("div");
             row.classList.add("row");
 
-            for (let j = 0; j < 5; j++) {
+            for (let j = 0; j < cols; j++) {
                 const slot = document.createElement("div");
                 slot.classList.add("slot-container");
                 slot.dataset.index = j; // Save the slot index
@@ -215,14 +215,23 @@ document.addEventListener("DOMContentLoaded", () => {
             slot.appendChild(marker);
         });
 
-        if (currentGuess.join() !== solution.join()) {
+        if (currentGuess.join() === solution.join()) {
+            if (settings.mode === "stopwatch") {
+
+                stopStopwatch();
+                if (saveBestTime(elapsedTime)) {
+                    alert("Legjobb idő!");
+                }
+            }
+            // alert("Gratulálok, nyertél!");
+        }
+        else {
             activeRow++;
             if (activeRow >= board.children.length) {
                 if (settings.mode == "stopwatch") {
                     stopStopwatch();                    
                 }                
-                // alert("Játék vége! A megoldás: " + solution.join(", "));    
-                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));            
+                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
             } else {
                 currentGuess = [null, null, null, null, null]; // Reset guess
                 selectedSlotIndex = null; // Reset selected slot
@@ -288,20 +297,21 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedSlotIndex = null;
         displayColorPoll(setup.pollColors);
         displayBoard(settings.rows);
-        if (settings.mode == "stopwatch") {            
-            const stopwatch = document.getElementById("stopwatch");
-            if (stopwatch.classList.contains("hidden")) {
-                stopwatch.classList.remove("hidden");
-                stopwatch.classList.add("show");
+        if (settings.mode === "stopwatch") {
+            const stopwatchContainer = document.getElementById("stopwatch-container");
+            if (stopwatchContainer.classList.contains("hidden")) {
+                stopwatchContainer.classList.remove("hidden");
+                stopwatchContainer.classList.add("show");
             }
+            displayBestTime();
             resetStopwatch();            
             startStopwatch();
         }
         else {            
-            const stopwatch = document.getElementById("stopwatch");
-            if (stopwatch.classList.contains("show")) {
-                stopwatch.classList.remove("show");
-                stopwatch.classList.add("hidden");
+            const stopwatchContainer = document.getElementById("stopwatch-container");
+            if (stopwatchContainer.classList.contains("show")) {
+                stopwatchContainer.classList.remove("show");
+                stopwatchContainer.classList.add("hidden");
             } 
             stopStopwatch();   
         }
@@ -325,7 +335,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const allowDuplicates = document.getElementById("allow-duplicates").checked;
         const mode = document.querySelector('input[name="mode"]:checked').value;
         const helper = document.getElementById("helper").checked;
-
+        // Validation: Ensure valid settings
+        if (!allowDuplicates && colorPollLength < 5) {
+            alert("Hibás beállítás: legalább 5 színt kell megengedni, ha az ismétlődést kikapcsoljuk.");
+            return; // Stop the function from proceeding
+        }
         // Create the updated settings object
         settings = {
             rows: rows,
@@ -373,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const solution = [];
 
         // Step 3: Generate the solution
-        while (solution.length < 5) {
+        while (solution.length < cols) {
             const randomColor = pollColors[Math.floor(Math.random() * pollColors.length)];
             if (allowDuplicates || !solution.includes(randomColor)) {
                 solution.push(randomColor);
@@ -425,6 +439,42 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         return solution.map(color => colorTranslations[color] || color); // Use translation or fallback to English
+    }
+
+    function saveBestTime(time) {
+        // Create a unique key based on rows, colorPollLength, and allowDuplicates
+        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
+        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+
+        // Get existing times or initialize as empty
+        const bestTime = JSON.parse(localStorage.getItem(key)); // Retrieve existing best time
+
+        // Save the new best time if it's better or if no best time exists
+        if (!bestTime || elapsedTime < bestTime) {
+            localStorage.setItem(key, JSON.stringify(elapsedTime));
+            return true; // Indicate that a new best time was set
+        }
+        return false; // No change to the best time
+    }
+
+    function getBestTime() {
+        // Create a unique key based on rows, colorPollLength, and allowDuplicates
+        const duplicatesSuffix = settings.allowDuplicates ? "_DA" : "_NoDA";
+        const key = `bestTime_${settings.rows}_${settings.colorPollLength}${duplicatesSuffix}`;
+
+        // Return existing times or an empty array
+        return JSON.parse(localStorage.getItem(key)) || [];
+    }
+
+    function displayBestTime() {
+        const bestTime = getBestTime();
+        const bestTimeDisplay = document.getElementById("best-time-display");
+
+        if (bestTime) {
+            bestTimeDisplay.textContent = `Legjobb idő: ${bestTime}s`;
+        } else {
+            bestTimeDisplay.textContent = "Legjobb idő: ";
+        }
     }
 
     newGameButton.click();
