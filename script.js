@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const newGameButton = document.getElementById("new-game-button");
     const settingsButton  = document.getElementById("settings-button");
     const saveSettingsButton = document.getElementById("save-settings-button");
+    const eraseResultsButton = document.getElementById("erase-results-button");
 
     const maxRows = 10;
     const maxColors = 10;
@@ -16,21 +17,156 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedSlotIndex = null; // Track the currently selected slot in the active row
     let stopwatchInterval;
     let elapsedTime = 0;
+    let language = localStorage.getItem("language") || "hu";
 
     // Declare setup and settings globally
     let settings;
     let setup;
+    let translations = {};
 
-    // function toggleStopwatchMode(isStopwatchMode) {
-    //     const stopwatch = document.getElementById('stopwatch');
-    //     if (isStopwatchMode) {
-    //         stopwatch.style.display = 'inline'; // Show the stopwatch
-    //         resetStopwatch(); // Ensure it starts from zero
-    //     } else {
-    //         stopwatch.style.display = 'none'; // Hide the stopwatch
-    //         clearInterval(stopwatchInterval); // Stop updating
-    //     }
-    // }
+    async function loadTranslations() {
+        const response = await fetch('translations.json');
+        translations = await response.json();
+
+        // Apply the default or saved language
+        const savedLanguage = localStorage.getItem('language') || 'en';
+        applyLocalization(savedLanguage);
+    }
+
+    function applyLocalization(language) {
+        const texts = translations[language];
+
+        // Update button labels
+        document.getElementById("new-game-button").textContent = texts.newGame;
+        document.getElementById("check-button").textContent = texts.check;
+        document.getElementById("settings-button").textContent = texts.settings;
+
+        // Store the selected language in localStorage for persistence
+        localStorage.setItem("language", language);
+    }
+
+    document.getElementById("language-selector").addEventListener("change", (event) => {
+        const selectedLanguage = event.target.value;
+        applyLocalization(selectedLanguage);
+    });
+
+    // Check the player's guess
+    checkButton.addEventListener("click", () => {
+        if (currentGuess.includes(null)) {
+            alert(translations[language].alertFinishGuess);
+            return;
+        }
+
+        const currentRow = board.children[activeRow];
+        const feedback = checkGuess([...currentGuess], [...setup.solution]); // Call checkGuess with the current guess and solution
+
+        currentGuess.forEach((color, index) => {
+            const slot = currentRow.children[index];
+
+            const marker = document.createElement("span");
+            marker.style.color = "white";
+            marker.style.fontSize = "18px";
+            marker.style.fontWeight = "bold";
+            marker.style.position = "absolute";
+            marker.style.top = "50%";
+            marker.style.left = "50%";
+            marker.style.transform = "translate(-50%, -50%)";
+            // Apply feedback to the current guess
+            switch (feedback[index]) {
+                case "correct":
+                    // Correct position marker
+                    marker.textContent = "✓";
+                    break;
+                case "wrong position":
+                    // Wrong position marker
+                    marker.textContent = "⚪";
+                    break;
+                default:
+                    // Incorrect marker
+                    marker.textContent = "X";
+                    break;
+            }
+            slot.appendChild(marker);
+        });
+
+        if (currentGuess.join() === solution.join()) {
+            // alert("Gratulálok, nyertél!");
+            if (settings.mode === "stopwatch") {
+                stopStopwatch();
+                if (saveBestTime(elapsedTime)) {
+                    displayBestTime();
+                    alert("Legjobb idő!");
+                }
+            }
+            if (settings.mode === "score") {
+                const score = calculateScore(activeRow);
+                if (saveScore(score)) {
+                    displayScore();
+                }
+            }
+        }
+        else {
+            activeRow++;
+            if (activeRow >= board.children.length) {
+                if (settings.mode === "stopwatch") {
+                    stopStopwatch();
+                }
+                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
+            } else {
+                currentGuess = [null, null, null, null, null]; // Reset guess
+                selectedSlotIndex = null; // Reset selected slot
+                updateBoard(); // Enable the next row
+            }
+        }
+    });
+
+    newGameButton.addEventListener("click", () => {
+        settings = getSettings();
+        setup = setupGame(getSettings());
+        newGame(settings, setup);
+    });
+
+    saveSettingsButton.addEventListener("click", () => {
+        const rows = document.getElementById("rows").value;
+        const colorPollLength = document.getElementById("color-poll-length").value;
+        const allowDuplicates = document.getElementById("allow-duplicates").checked;
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const helper = document.getElementById("helper").checked;
+        // Validation: Ensure valid settings
+        if (!allowDuplicates && colorPollLength < 5) {
+            alert("Hibás beállítás: legalább 5 színt kell megengedni, ha az ismétlődést kikapcsoljuk.");
+            return; // Stop the function from proceeding
+        }
+        // Create the updated settings object
+        settings = {
+            rows: rows,
+            colorPollLength: colorPollLength,
+            allowDuplicates: allowDuplicates,
+            mode: mode,
+            helper: helper,
+        };
+
+        // Save the updated settings to localStorage
+        localStorage.setItem("settings", JSON.stringify(settings));
+
+        const settingsPanel = document.getElementById("settings");
+        settingsPanel.classList.remove("show");
+        settingsPanel.classList.add("hidden");
+    });
+
+    eraseResultsButton.addEventListener("click", () => {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const rows = document.getElementById("rows").value;
+        const colorPollLength = document.getElementById("color-poll-length").value;
+        const allowDuplicates = document.getElementById("allow-duplicates").checked;
+
+        const duplicatesSuffix = allowDuplicates ? "DA" : "NoDA";
+        const prefixes = ['bestTime', 'score'];
+        prefixes.forEach((prefix) => {
+            let key = `${prefix}_${rows}_${colorPollLength}_${duplicatesSuffix}`;
+            localStorage.removeItem(key);
+        })
+    })
 
     function startStopwatch() {
         const stopwatch = document.getElementById('stopwatch');
@@ -176,76 +312,6 @@ document.addEventListener("DOMContentLoaded", () => {
         slot.style.backgroundColor = color; // Apply the selected color to the slot
     }
 
-    // Check the player's guess
-    checkButton.addEventListener("click", () => {
-        if (currentGuess.includes(null)) {
-            alert("Fejezd be a tippelést az ellenőrzés előtt!");
-            return;
-        }
-
-        const currentRow = board.children[activeRow];
-        const feedback = checkGuess([...currentGuess], [...setup.solution]); // Call checkGuess with the current guess and solution
-
-        currentGuess.forEach((color, index) => {
-            const slot = currentRow.children[index];
-
-            const marker = document.createElement("span");
-            marker.style.color = "white";
-            marker.style.fontSize = "18px";
-            marker.style.fontWeight = "bold";
-            marker.style.position = "absolute";
-            marker.style.top = "50%";
-            marker.style.left = "50%";
-            marker.style.transform = "translate(-50%, -50%)";
-            // Apply feedback to the current guess
-            switch (feedback[index]) {
-                case "correct":
-                    // Correct position marker
-                    marker.textContent = "✓";
-                    break;
-                case "wrong position":
-                    // Wrong position marker
-                    marker.textContent = "⚪";
-                    break;
-                default:
-                    // Incorrect marker
-                    marker.textContent = "X";
-                    break;
-            }
-            slot.appendChild(marker);
-        });
-
-        if (currentGuess.join() === solution.join()) {
-            // alert("Gratulálok, nyertél!");
-            if (settings.mode === "stopwatch") {
-                stopStopwatch();
-                if (saveBestTime(elapsedTime)) {
-                    displayBestTime();
-                    alert("Legjobb idő!");
-                }
-            }
-            if (settings.mode === "score") {
-                const score = calculateScore(activeRow);
-                if (saveScore(score)) {
-                    displayScore();
-                }
-            }
-        }
-        else {
-            activeRow++;
-            if (activeRow >= board.children.length) {
-                if (settings.mode === "stopwatch") {
-                    stopStopwatch();                    
-                }                
-                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
-            } else {
-                currentGuess = [null, null, null, null, null]; // Reset guess
-                selectedSlotIndex = null; // Reset selected slot
-                updateBoard(); // Enable the next row
-            }
-        }
-    });
-
     function checkGuess(guess, solution) {
         const feedback = new Array(guess.length).fill("wrong color"); // Default to "wrong color"
         const colorCount = {}; // Track occurrences of each color in the solution
@@ -289,12 +355,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
-
-    newGameButton.addEventListener("click", () => {
-        settings = getSettings();
-        setup = setupGame(getSettings());
-        newGame(settings, setup);
-    });
 
     function toggleContainer(containerId, show) {
         const container = document.getElementById(containerId);
@@ -351,34 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
             settingsPanel.classList.remove("show");
             settingsPanel.classList.add("hidden");
         }
-    });
-
-    saveSettingsButton.addEventListener("click", () => {
-        const rows = document.getElementById("rows").value;
-        const colorPollLength = document.getElementById("color-poll-length").value;
-        const allowDuplicates = document.getElementById("allow-duplicates").checked;
-        const mode = document.querySelector('input[name="mode"]:checked').value;
-        const helper = document.getElementById("helper").checked;
-        // Validation: Ensure valid settings
-        if (!allowDuplicates && colorPollLength < 5) {
-            alert("Hibás beállítás: legalább 5 színt kell megengedni, ha az ismétlődést kikapcsoljuk.");
-            return; // Stop the function from proceeding
-        }
-        // Create the updated settings object
-        settings = {
-            rows: rows,
-            colorPollLength: colorPollLength,
-            allowDuplicates: allowDuplicates,
-            mode: mode,
-            helper: helper,
-        };
-
-        // Save the updated settings to localStorage
-        localStorage.setItem("settings", JSON.stringify(settings));
-
-        const settingsPanel = document.getElementById("settings");
-        settingsPanel.classList.remove("show");
-        settingsPanel.classList.add("hidden");        
     });
 
     function loadSettings() {
@@ -543,6 +575,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const duplicatesSuffix = settings.allowDuplicates ? "DA" : "NoDA";
         return `${prefix}_${settings.rows}_${settings.colorPollLength}_${duplicatesSuffix}`;
     }
-
+    loadTranslations();
     newGameButton.click();
 });

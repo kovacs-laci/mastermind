@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mastermind Board</title>
+    <title>Mastermind</title>
     <link rel="stylesheet" href="style.css">
 	<script src="script.js"></script>
     <link rel="icon" type="image/jpeg" href="mastermind.jpg">
@@ -20,31 +20,40 @@
 	<div id="color-poll"></div>
 	<div id="board"></div>
     <button id="new-game-button">Új játék</button>
-    <button id="check-button"><span class="checkmark">✓️</span> Ellenőrzés</button>
+    <button id="check-button">✓️ Ellenőrzés</button>
     <button id="settings-button">⚙️ Beállítások</button>
     <br>
     <div class="hidden" id="settings">
         <fieldset>
             <legend>Beállítások</legend>
+
             <div class="form-group>">
-                <label for="rows">Sorok száma:</label>
+                <label for="language-selector">Válassz nyelvet</label>
+                <select id="language-selector">
+                    <option value="en">English</option>
+                    <option value="hu" selected>Magyar</option>
+                </select>
+            </div>
+
+            <div class="form-group>">
+                <label for="rows">Sorok száma</label>
                 <input type="number" id="rows" min="1" max="10" value="5" width="15px">
             </div>
 
             <div class="form-group>">
-                <label for="color-poll-length">Színek száma:</label>
+                <label for="color-poll-length">Színek száma</label>
                 <input type="number" id="color-poll-length" min="1" max="10" value="5">
             </div>
 
             <div class="form-group>">
-                <label for="allow-duplicates">Ismétlődő színek:</label>
+                <label for="allow-duplicates">Ismétlődő színek</label>
                 <input type="checkbox" id="allow-duplicates">
             </div>
 
             <fieldset>
                 <legend>Játékmód</legend>
                 <input type="radio" id="timer" name="mode" value="stopwatch">
-                <label for="timer">Időmérő</label>
+                <label for="timer">⏳ Időmérő</label>
                 <input type="radio" id="score" name="mode" value="score">
                 <label for="score">Pontgyűjtő</label>
                 <input type="radio" id="relax" name="mode" value="relax" checked>
@@ -55,7 +64,8 @@
                 <input type="checkbox" id="helper">
             </div>
             <br>
-            <button id="save-settings-button">Mentés</button>
+            <button id="save-settings-button">🖫 Mentés</button>
+            <button id="erase-results-button">🗑️ Eredmények törlése</button>
         </fieldset>
     </div>
 </body>
