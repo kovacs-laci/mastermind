@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 stopStopwatch();
                 if (saveBestTime(elapsedTime)) {
                     displayBestTime();
-                    alert("Legjobb idő!");
+                    alert(translations[language].bestTime);
                 }
             }
             if (settings.mode === "score") {
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (settings.mode === "stopwatch") {
                     stopStopwatch();
                 }
-                alert("Játék vége! A megoldás: " + translateSolution(solution).join(", "));
+                alert(translations[language].gameOver + translateSolution(solution).join(", "));
             } else {
                 currentGuess = [null, null, null, null, null]; // Reset guess
                 selectedSlotIndex = null; // Reset selected slot
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const helper = document.getElementById("helper").checked;
         // Validation: Ensure valid settings
         if (!allowDuplicates && colorPollLength < 5) {
-            alert("Hibás beállítás: legalább 5 színt kell megengedni, ha az ismétlődést kikapcsoljuk.");
+            alert(translations[language].wrongSettings);
             return; // Stop the function from proceeding
         }
         // Create the updated settings object
@@ -282,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Select a slot in the active row
     function selectSlot(index) {
         if (activeRow === null) {
-            alert("Nincs kiválasztott sor!");
+            alert(translations[language].noSelectedRow);
             return;
         }
 
