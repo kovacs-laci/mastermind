@@ -25,13 +25,18 @@
     <br>
     <div class="hidden" id="settings">
         <fieldset>
-            <legend>Beállítások</legend>
+            <legend id="settings-legend">Beállítások</legend>
 
             <div class="form-group>">
                 <label for="language-selector">Válassz nyelvet</label>
                 <select id="language-selector">
                     <option value="en">English</option>
                     <option value="hu" selected>Magyar</option>
+                    <option value="pl">Polski</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="tlh">Klingon (tlhIngan Hol)</option>
+                    <option value="eo">Esperanto</option>
                 </select>
             </div>
 
@@ -51,7 +56,7 @@
             </div>
 
             <fieldset>
-                <legend>Játékmód</legend>
+                <legend id="game-mode-legend">Játékmód</legend>
                 <input type="radio" id="timer" name="mode" value="stopwatch">
                 <label for="timer">⏳ Időmérő</label>
                 <input type="radio" id="score" name="mode" value="score">

@@ -29,25 +29,43 @@ document.addEventListener("DOMContentLoaded", () => {
         translations = await response.json();
 
         // Apply the default or saved language
-        const savedLanguage = localStorage.getItem('language') || 'en';
-        applyLocalization(savedLanguage);
+        language = localStorage.getItem('language') || 'hu';
+        applyLocalization(language);
     }
 
     function applyLocalization(language) {
         const texts = translations[language];
 
-        // Update button labels
-        document.getElementById("new-game-button").textContent = texts.newGame;
-        document.getElementById("check-button").textContent = texts.check;
-        document.getElementById("settings-button").textContent = texts.settings;
+        // Update legends
+        document.getElementById("settings-legend").textContent = texts.settingsLegend; // Settings
+        document.getElementById("game-mode-legend").textContent = texts.gameModeLegend; // Game Mode
 
-        // Store the selected language in localStorage for persistence
-        localStorage.setItem("language", language);
+        // Update button labels
+        document.getElementById("new-game-button").textContent = `${texts.newGame}`;
+        document.getElementById("check-button").textContent = `✓️ ${texts.check}`;
+        document.getElementById("settings-button").textContent = `⚙️ ${texts.settings}`;
+        document.getElementById("save-settings-button").textContent = `🖫 ${texts.save}`;
+        document.getElementById("erase-results-button").textContent = `🗑️ ${texts.eraseResults}`;
+
+        // Update text in settings fields
+        document.querySelector("label[for='language-selector']").textContent = texts.selectLanguage;
+        document.querySelector("label[for='rows']").textContent = texts.rows;
+        document.querySelector("label[for='color-poll-length']").textContent = texts.colorPollLength;
+        document.querySelector("label[for='allow-duplicates']").textContent = texts.allowDuplicates;
+
+        // Update game mode options
+        document.querySelector("label[for='timer']").textContent = `⏳ ${texts.timer}`;
+        document.querySelector("label[for='score']").textContent = texts.collectScore;
+        document.querySelector("label[for='relax']").textContent = texts.relax;
+
+        // Set the selected language in the dropdown
+        document.getElementById("language-selector").value = language;
     }
 
+
     document.getElementById("language-selector").addEventListener("change", (event) => {
-        const selectedLanguage = event.target.value;
-        applyLocalization(selectedLanguage);
+        language = event.target.value;
+        applyLocalization(language);
     });
 
     // Check the player's guess
@@ -111,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (settings.mode === "stopwatch") {
                     stopStopwatch();
                 }
-                alert(translations[language].gameOver + translateSolution(solution).join(", "));
+                alert(translations[language].gameOver + translateSolution(solution, language).join(", "));
             } else {
                 currentGuess = [null, null, null, null, null]; // Reset guess
                 selectedSlotIndex = null; // Reset selected slot
@@ -132,6 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const allowDuplicates = document.getElementById("allow-duplicates").checked;
         const mode = document.querySelector('input[name="mode"]:checked').value;
         const helper = document.getElementById("helper").checked;
+        const language = document.querySelector('#language-selector').value;
+
+
+        localStorage.setItem("language", language);
         // Validation: Ensure valid settings
         if (!allowDuplicates && colorPollLength < 5) {
             alert(translations[language].wrongSettings);
@@ -475,27 +497,13 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    function translateSolution(solution) {
-        const colorTranslations = {
-            red: "piros",
-            blue: "kék",
-            green: "zöld",
-            brown: "barna",
-            purple: "lila",
-            yellow: "sárga",
-            orange: "narancs",
-            pink: "rózsaszín",
-            gray: "szürke",
-            black: "fekete",
-            tomato: "paradicsom",
-            cyan: "cián",
-            magenta: "magenta",
-            lime: "lime",
-            teal: "türkiz"
-        };
+    function translateSolution(solution, language) {
+        const colorTranslations = translations[language].colors;
 
-        return solution.map(color => colorTranslations[color] || color); // Use translation or fallback to English
+        // Use translation or fallback to original color
+        return solution.map(color => colorTranslations[color] || color);
     }
+
 
     function saveBestTime(time) {
         const key = getSettingsKey('bestTime');
